@@ -1,6 +1,6 @@
 # Gomez Alpha Bot
 
-**GOMEZ ALPHA BOT** is an MetaTrader 5 Expert Advisor project for structured EURUSD market analysis. The current source version is **1.10**.
+**GOMEZ ALPHA BOT v1.20** is a MetaTrader 5 Expert Advisor for multi-method EURUSD market analysis and transparent trade-plan reporting.
 
 ## Project structure
 
@@ -11,30 +11,46 @@ Gomez-Alpha-Bot/
     └── Gomez_Alpha_Bot.mq5
 ```
 
-## Strategy framework
+## Analysis framework
 
-- **Default market:** EURUSD. Configure the exact broker symbol if it uses a suffix or prefix.
-- **Signal timeframe:** M15; evaluate the previous fully closed candle when a new M15 candle begins.
-- **Trend timeframe:** H1; EMA 50/200 alignment and the last closed H1 price relative to EMA 200.
-- **Momentum:** RSI and MACD confirmation on the signal timeframe.
-- **Volatility:** ATR for context and illustrative risk-reference levels.
-- **Structure:** confirmed swing-high and swing-low pivots with configurable lookback and swing strength; recent extremes are used as a fallback context reference if a pivot is missing on one side.
-- **Output:** BUY, SELL or WAIT. WAIT remains the default unless the configured checks align.
-- **Reporting:** chart comment and Experts log with the signal, timeframe, closed-candle time, indicator values, structure levels and assessment reason.
+- **Multi-timeframe trend:** H1 EMA 50/200 alignment and last closed H1 price relative to EMA 200.
+- **M15 setup:** EMA 50/200 alignment and closed price relative to EMA 50.
+- **Momentum:** RSI and MACD agreement.
+- **Trend strength:** ADX with +DI/-DI directional comparison.
+- **Volatility and range context:** ATR and Bollinger Bands.
+- **Price action:** basic bullish/bearish engulfing and pin-bar checks on closed candles.
+- **Market structure:** confirmed swing-high/swing-low pivots, nearest support/resistance and a recent-extreme fallback when a pivot is unavailable.
+- **Confluence score:** weighted directional evidence with a configurable minimum score. Scores are heuristic agreement measures, not statistically calibrated probabilities.
+- **Trade-plan references:** closed-candle entry reference, ATR-based illustrative stop-loss and target, reward/risk calculation, nearby structure room and spread context.
+- **Decision:** BUY, SELL or WAIT. WAIT is retained whenever core trend/momentum/structure conditions conflict, the spread exceeds the configured threshold, or the illustrative reward/risk fails the minimum.
+
+## Default setup
+
+- Symbol: EURUSD (adjust for broker suffixes/prefixes)
+- Signal timeframe: M15
+- Trend timeframe: H1
+- EMA: 50 / 200
+- RSI: 14
+- MACD: 12 / 26 / 9
+- ADX: 14
+- ATR: 14
+- Bollinger Bands: 20 periods, 2 deviations
+
+Settings are configurable through the Expert Advisor inputs.
 
 ## Safety scope
 
-**ANALYSIS ONLY — NO ORDERS.** The EA source contains no order placement, modification, or closing calls. It does not use martingale, grid trading, averaging down, or forced entries. Stop-loss and take-profit values are illustrative ATR-based references only; they are not submitted to a broker.
+**ANALYSIS ONLY — NO ORDERS.** The EA source does not place, modify, or close trades. It does not use martingale, grid trading, averaging down, or forced entries. Entry, stop-loss and take-profit values are analytical references only and are not sent to a broker.
 
 ## Validation status
 
-Version 1.10 improves input validation, indicator readiness checks, signal explanations, H1 price confirmation, and swing-based structure detection. **It has not yet been compiled or tested in MetaEditor in this repository workflow.** Review the source, compile it in MetaEditor, resolve compiler messages, then validate behavior in the Strategy Tester and on a demo account. Do not rely on uncompiled or untested signals for trading decisions.
+Version 1.20 expands the analysis framework and report. **It has not yet been compiled or tested in MetaEditor in this workflow.** Indicator buffer handling, pivot detection, score logic, broker symbol compatibility, and all compiler messages must be checked in MetaEditor. Then use Strategy Tester and a demo account to evaluate signal timing, edge cases, false positives, and historical performance.
 
-No strategy can guarantee profits. Historical and demo testing do not ensure future performance.
+The confluence score is a rule-based heuristic, not a probability that a trade will win. Historical or demo results cannot guarantee future performance. Do not use the EA as the sole basis for a financial decision.
 
 ## Next milestones
 
-1. Compile in MetaEditor and resolve all errors and warnings.
-2. Verify confirmed swing pivots and support/resistance on historical charts.
-3. Test data readiness, signal timing, and WAIT behavior in Strategy Tester.
-4. Review signal quality and false positives before considering any further development.
+1. Compile in MetaEditor and resolve errors/warnings.
+2. Validate indicator buffers and swing-structure calculations visually against charts.
+3. Test WAIT conditions, spread handling, reward/risk filtering and signal timing in Strategy Tester.
+4. Review results over varied market regimes before considering further features.
