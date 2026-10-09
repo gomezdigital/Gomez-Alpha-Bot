@@ -37,6 +37,13 @@ def main() -> int:
         "excessive spread forces WAIT": r"spreadPoints\s*>\s*InpMaximumSpreadPoints[\s\S]{0,180}signal\s*=\s*SIGNAL_WAIT",
         "insufficient reward/risk forces WAIT": r"rewardRisk\s*<\s*InpMinimumRewardRisk[\s\S]{0,180}signal\s*=\s*SIGNAL_WAIT",
         "WAIT is the default signal": r"SIGNAL_DIRECTION signal\s*=\s*SIGNAL_WAIT",
+        "BUY stop reference is below entry using ATR": r"stopReference\s*=\s*entryReference\s*-\s*\(atr\s*\*\s*InpStopATRMultiplier\)",
+        "BUY target reference is above entry using ATR": r"targetReference\s*=\s*entryReference\s*\+\s*\(atr\s*\*\s*InpTargetATRMultiplier\)",
+        "SELL stop reference is above entry using ATR": r"stopReference\s*=\s*entryReference\s*\+\s*\(atr\s*\*\s*InpStopATRMultiplier\)",
+        "SELL target reference is below entry using ATR": r"targetReference\s*=\s*entryReference\s*-\s*\(atr\s*\*\s*InpTargetATRMultiplier\)",
+        "report explicitly states no orders": r"MODE: ANALYSIS ONLY - NO ORDERS",
+        "WAIT report does not issue a trade plan": r"No trade plan issued: wait for clearer conditions",
+        "stop/target levels are labelled illustrative": r"Illustrative SL:[\s\S]{0,100}Illustrative TP:",
     }
 
     failed = False
