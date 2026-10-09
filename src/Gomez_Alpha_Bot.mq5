@@ -6,7 +6,7 @@
 //| Safety: ANALYSIS ONLY - NO ORDER EXECUTION
 //+------------------------------------------------------------------+
 #property strict
-#property version   "1.20"
+#property version   "1.30"
 #property description "Gomez Alpha Bot: multi-method analysis-only M15/H1 assistant."
 
 enum SIGNAL_DIRECTION
@@ -67,6 +67,7 @@ int hATR=INVALID_HANDLE;
 int hADX=INVALID_HANDLE;
 int hBands=INVALID_HANDLE;
 datetime g_lastSignalBarTime=0;
+datetime g_lastReadinessNoticeBarTime=0;
 
 //+------------------------------------------------------------------+
 //| Read one indicator value safely.                                  |
@@ -334,10 +335,20 @@ void AnalyzeClosedCandle()
 
    MqlTick tick;
    double spreadPoints=-1.0;
-   if(SymbolInfoTick(InpSymbol,tick) && tick.ask>0.0 && tick.bid>0.0)
-      spreadPoints=(tick.ask-tick.bid)/SymbolInfoDouble(InpSymbol,SYMBOL_POINT);
+   double symbolPoint=SymbolInfoDouble(InpSymbol,SYMBOL_POINT);
+   bool tickAvailable=(SymbolInfoTick(InpSymbol,tick) &&
+                       tick.ask>0.0 && tick.bid>0.0 &&
+                       tick.ask>=tick.bid && symbolPoint>0.0);
 
-   if(spreadPoints>=0.0 && spreadPoints>InpMaximumSpreadPoints)
+   if(tickAvailable)
+      spreadPoints=(tick.ask-tick.bid)/symbolPoint;
+   else
+     {
+      signal=SIGNAL_WAIT;
+      reason="Current bid/ask or symbol point unavailable";
+     }
+
+   if(tickAvailable && spreadPoints>InpMaximumSpreadPoints)
      {
       signal=SIGNAL_WAIT;
       reason="Spread exceeds configured analysis threshold";
@@ -483,11 +494,27 @@ void OnDeinit(const int reason)
   }
 
 //+------------------------------------------------------------------+
-//| Analyze only once per newly opened signal-timeframe candle.       |
+//| Analyze a newly opened signal-timeframe candle after indicators are ready.       |
 //+------------------------------------------------------------------+
 void OnTick()
   {
-   if(IsNewSignalBar())
-      AnalyzeClosedCandle();
+   datetime currentBarTime=iTime(InpSymbol,InpSignalTimeframe,0);
+   if(currentBarTime<=0 || currentBarTime==g_lastSignalBarTime)
+      return;
+
+   // Do not mark the candle as processed until indicator history is ready.
+   // This allows a retry on later ticks instead of silently skipping the cycle.
+   if(!IndicatorsReady())
+     {
+      if(g_lastReadinessNoticeBarTime!=currentBarTime)
+        {
+         Print("GOMEZ ALPHA BOT | WAIT | Indicator history is loading; will retry on later ticks.");
+         g_lastReadinessNoticeBarTime=currentBarTime;
+        }
+      return;
+     }
+
+   g_lastSignalBarTime=currentBarTime;
+   AnalyzeClosedCandle();
   }
 //+------------------------------------------------------------------+
