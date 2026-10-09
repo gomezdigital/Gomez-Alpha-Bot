@@ -26,6 +26,8 @@ def main() -> int:
         "initialization handler exists": r"\bint\s+OnInit\s*\(",
         "tick handler exists": r"\bvoid\s+OnTick\s*\(",
         "cleanup handler exists": r"\bvoid\s+OnDeinit\s*\(",
+        "indicator readiness retry is present": r"will retry on later ticks",
+        "missing market tick fails safe": r"Current bid/ask or symbol point unavailable",
     }
 
     failed = False
