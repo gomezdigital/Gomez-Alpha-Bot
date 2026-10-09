@@ -382,7 +382,7 @@ void AnalyzeClosedCandle()
       targetReference=0.0;
      }
 
-   string report="GOMEZ ALPHA BOT v1.20\n";
+   string report="GOMEZ ALPHA BOT v1.30\n";
    report+="MODE: ANALYSIS ONLY - NO ORDERS\n";
    report+="Signal: "+(signal==SIGNAL_BUY ? "BUY" : signal==SIGNAL_SELL ? "SELL" : "WAIT")+
            " | "+InpSymbol+"\n";
