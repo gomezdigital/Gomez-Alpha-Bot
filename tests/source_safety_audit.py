@@ -28,6 +28,15 @@ def main() -> int:
         "cleanup handler exists": r"\bvoid\s+OnDeinit\s*\(",
         "indicator readiness retry is present": r"will retry on later ticks",
         "missing market tick fails safe": r"Current bid/ask or symbol point unavailable",
+        "missing indicator data is handled safely": r"WAIT \| Price or indicator data unavailable",
+        "missing structure data is handled safely": r"WAIT \| Reliable structure levels unavailable",
+        "analysis uses closed M15 candle": r"iClose\(InpSymbol,InpSignalTimeframe,1\)",
+        "analysis uses closed H1 candle": r"iClose\(InpSymbol,InpTrendTimeframe,1\)",
+        "BUY requires H1 and M15 bullish confirmation": r"if\(h1Bullish\s*&&\s*m15Bullish\s*&&\s*momentumBullish",
+        "SELL requires H1 and M15 bearish confirmation": r"if\(h1Bearish\s*&&\s*m15Bearish\s*&&\s*momentumBearish",
+        "excessive spread forces WAIT": r"spreadPoints\s*>\s*InpMaximumSpreadPoints[\s\S]{0,180}signal\s*=\s*SIGNAL_WAIT",
+        "insufficient reward/risk forces WAIT": r"rewardRisk\s*<\s*InpMinimumRewardRisk[\s\S]{0,180}signal\s*=\s*SIGNAL_WAIT",
+        "WAIT is the default signal": r"SIGNAL_DIRECTION signal\s*=\s*SIGNAL_WAIT",
     }
 
     failed = False
