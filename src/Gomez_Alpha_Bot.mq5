@@ -484,6 +484,8 @@ void AnalyzeClosedCandle()
    report+="Signal: "+(signal==SIGNAL_BUY ? "BUY" : signal==SIGNAL_SELL ? "SELL" : "WAIT")+
            " | "+InpSymbol+"\n";
    report+="Closed candle: "+TimeToString(iTime(InpSymbol,InpSignalTimeframe,1),TIME_DATE|TIME_MINUTES)+"\n";
+   report+="H1 trend: "+(h1Bullish ? "BULLISH" : h1Bearish ? "BEARISH" : "NEUTRAL")+" | M15 trend: "+(m15Bullish ? "BULLISH" : m15Bearish ? "BEARISH" : "NEUTRAL")+"\n";
+   report+="Setup context: "+setupContext+"\n";
    report+="Timeframes: "+EnumToString(InpSignalTimeframe)+" setup / "+
            EnumToString(InpTrendTimeframe)+" trend\n";
    report+="Confluence score: BUY "+IntegerToString(buyScore)+"/"+IntegerToString(maxScore)+
