@@ -524,17 +524,17 @@ void AnalyzeClosedCandle()
      {
       Comment(report);
       color dashboardColor=(signal==SIGNAL_BUY ? clrLimeGreen : signal==SIGNAL_SELL ? clrTomato : clrGold);
-      UpdateDashboard("GOMEZ ALPHA BOT v1.50\\n"+
-                      "MODE: ANALYSIS ONLY\\n"+
-                      "SIGNAL: "+(signal==SIGNAL_BUY ? "BUY" : signal==SIGNAL_SELL ? "SELL" : "WAIT")+"\\n"+
-                      "H1 TREND: "+(h1Bullish ? "BULLISH" : h1Bearish ? "BEARISH" : "NEUTRAL")+"\\n"+
-                      "M15 TREND: "+(m15Bullish ? "BULLISH" : m15Bearish ? "BEARISH" : "NEUTRAL")+"\\n"+
-                      "SETUP: "+setupContext+"\\n"+
-                      "BUY SCORE: "+IntegerToString(buyScore)+"/"+IntegerToString(maxScore)+" | SELL SCORE: "+IntegerToString(sellScore)+"/"+IntegerToString(maxScore)+"\\n"+
-                      "RSI: "+DoubleToString(rsi,1)+" | ADX: "+DoubleToString(adx,1)+"\\n"+
-                      "SUPPORT: "+DoubleToString(support,digits)+"\\n"+
-                      "RESISTANCE: "+DoubleToString(resistance,digits)+"\\n"+
-                      "SPREAD: "+DoubleToString(spreadPoints,1)+" pts\\n"+
+      UpdateDashboard("GOMEZ ALPHA BOT v1.50\n"+
+                      "MODE: ANALYSIS ONLY\n"+
+                      "SIGNAL: "+(signal==SIGNAL_BUY ? "BUY" : signal==SIGNAL_SELL ? "SELL" : "WAIT")+"\n"+
+                      "H1 TREND: "+(h1Bullish ? "BULLISH" : h1Bearish ? "BEARISH" : "NEUTRAL")+"\n"+
+                      "M15 TREND: "+(m15Bullish ? "BULLISH" : m15Bearish ? "BEARISH" : "NEUTRAL")+"\n"+
+                      "SETUP: "+setupContext+"\n"+
+                      "BUY SCORE: "+IntegerToString(buyScore)+"/"+IntegerToString(maxScore)+" | SELL SCORE: "+IntegerToString(sellScore)+"/"+IntegerToString(maxScore)+"\n"+
+                      "RSI: "+DoubleToString(rsi,1)+" | ADX: "+DoubleToString(adx,1)+"\n"+
+                      "SUPPORT: "+DoubleToString(support,digits)+"\n"+
+                      "RESISTANCE: "+DoubleToString(resistance,digits)+"\n"+
+                      "SPREAD: "+DoubleToString(spreadPoints,1)+" pts\n"+
                       "REASON: "+reason,dashboardColor);
      }
   }
@@ -585,7 +585,7 @@ int OnInit()
       return INIT_FAILED;
      }
 
-   Print("GOMEZ ALPHA BOT v1.40 initialized for ",InpSymbol,
+   Print("GOMEZ ALPHA BOT v1.50 initialized for ",InpSymbol,
          ". Multi-method analysis is active. Order execution is not implemented.");
    return INIT_SUCCEEDED;
   }
