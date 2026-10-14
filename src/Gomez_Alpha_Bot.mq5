@@ -6,8 +6,8 @@
 //| Safety: ANALYSIS ONLY - NO ORDER EXECUTION
 //+------------------------------------------------------------------+
 #property strict
-#property version   "1.30"
-#property description "Gomez Alpha Bot: multi-method analysis-only M15/H1 assistant."
+#property version   "1.40"
+#property description "Gomez Alpha Bot: M15/H1 analysis with chart levels; analysis-only."
 
 enum SIGNAL_DIRECTION
   {
@@ -184,6 +184,41 @@ bool FindStructure(const double price,double &support,double &resistance)
   }
 
 //+------------------------------------------------------------------+
+//+------------------------------------------------------------------+
+//| Draw/update an analysis level on the active chart.               |
+//+------------------------------------------------------------------+
+void DrawAnalysisLevel(const string name,const double price,const color lineColor,
+                       const ENUM_LINE_STYLE lineStyle,const int lineWidth)
+  {
+   if(price<=0.0 || !MathIsValidNumber(price))
+     {
+      ObjectDelete(0,name);
+      return;
+     }
+   if(ObjectFind(0,name)<0)
+     {
+      if(!ObjectCreate(0,name,OBJ_HLINE,0,0,price))
+        {
+         Print("GOMEZ ALPHA BOT: Could not draw chart level ",name,
+               ". Error ",GetLastError());
+         return;
+        }
+     }
+   ObjectSetDouble(0,name,OBJPROP_PRICE,price);
+   ObjectSetInteger(0,name,OBJPROP_COLOR,lineColor);
+   ObjectSetInteger(0,name,OBJPROP_STYLE,lineStyle);
+   ObjectSetInteger(0,name,OBJPROP_WIDTH,lineWidth);
+   ObjectSetInteger(0,name,OBJPROP_SELECTABLE,false);
+   ObjectSetInteger(0,name,OBJPROP_HIDDEN,true);
+  }
+
+void ClearTradePlanLevels()
+  {
+   ObjectDelete(0,"GAB_Entry");
+   ObjectDelete(0,"GAB_StopLoss");
+   ObjectDelete(0,"GAB_TakeProfit");
+  }
+
 //| Simple closed-candle pattern checks; not standalone entry rules.  |
 //+------------------------------------------------------------------+
 bool BullishEngulfing()
@@ -382,7 +417,19 @@ void AnalyzeClosedCandle()
       targetReference=0.0;
      }
 
-   string report="GOMEZ ALPHA BOT v1.30\n";
+   // Visual references only: these chart lines never submit orders.
+   DrawAnalysisLevel("GAB_Support",support,clrDeepSkyBlue,STYLE_DASH,1);
+   DrawAnalysisLevel("GAB_Resistance",resistance,clrOrangeRed,STYLE_DASH,1);
+   ClearTradePlanLevels();
+   if(signal==SIGNAL_BUY || signal==SIGNAL_SELL)
+     {
+      DrawAnalysisLevel("GAB_Entry",entryReference,clrGold,STYLE_SOLID,2);
+      DrawAnalysisLevel("GAB_StopLoss",stopReference,clrTomato,STYLE_DOT,2);
+      DrawAnalysisLevel("GAB_TakeProfit",targetReference,clrLimeGreen,STYLE_DOT,2);
+     }
+   ChartRedraw(0);
+
+   string report="GOMEZ ALPHA BOT v1.40\n";
    report+="MODE: ANALYSIS ONLY - NO ORDERS\n";
    report+="Signal: "+(signal==SIGNAL_BUY ? "BUY" : signal==SIGNAL_SELL ? "SELL" : "WAIT")+
            " | "+InpSymbol+"\n";
@@ -471,7 +518,7 @@ int OnInit()
       return INIT_FAILED;
      }
 
-   Print("GOMEZ ALPHA BOT v1.20 initialized for ",InpSymbol,
+   Print("GOMEZ ALPHA BOT v1.40 initialized for ",InpSymbol,
          ". Multi-method analysis is active. Order execution is not implemented.");
    return INIT_SUCCEEDED;
   }
@@ -491,6 +538,9 @@ void OnDeinit(const int reason)
    if(hADX!=INVALID_HANDLE) IndicatorRelease(hADX);
    if(hBands!=INVALID_HANDLE) IndicatorRelease(hBands);
    Comment("");
+   ObjectDelete(0,"GAB_Support");
+   ObjectDelete(0,"GAB_Resistance");
+   ClearTradePlanLevels();
   }
 
 //+------------------------------------------------------------------+
