@@ -6,8 +6,8 @@
 //| Safety: ANALYSIS ONLY - NO ORDER EXECUTION
 //+------------------------------------------------------------------+
 #property strict
-#property version   "1.40"
-#property description "Gomez Alpha Bot: M15/H1 analysis with chart levels; analysis-only."
+#property version   "1.50"
+#property description "Gomez Alpha Bot: M15/H1 trend dashboard and structure-aware analysis; no orders."
 
 enum SIGNAL_DIRECTION
   {
@@ -212,6 +212,33 @@ void DrawAnalysisLevel(const string name,const double price,const color lineColo
    ObjectSetInteger(0,name,OBJPROP_HIDDEN,true);
   }
 
+//+------------------------------------------------------------------+
+//| Create/update a readable chart dashboard.                        |
+//+------------------------------------------------------------------+
+void UpdateDashboard(const string text,const color textColor)
+  {
+   const string name="GAB_Dashboard";
+   if(ObjectFind(0,name)<0)
+     {
+      if(!ObjectCreate(0,name,OBJ_LABEL,0,0,0))
+        {
+         Print("GOMEZ ALPHA BOT: Could not create dashboard. Error ",GetLastError());
+         return;
+        }
+      ObjectSetInteger(0,name,OBJPROP_CORNER,CORNER_LEFT_UPPER);
+      ObjectSetInteger(0,name,OBJPROP_ANCHOR,ANCHOR_LEFT_UPPER);
+      ObjectSetInteger(0,name,OBJPROP_XDISTANCE,12);
+      ObjectSetInteger(0,name,OBJPROP_YDISTANCE,18);
+      ObjectSetInteger(0,name,OBJPROP_FONTSIZE,10);
+      ObjectSetString(0,name,OBJPROP_FONT,"Consolas");
+      ObjectSetInteger(0,name,OBJPROP_SELECTABLE,false);
+      ObjectSetInteger(0,name,OBJPROP_HIDDEN,true);
+      ObjectSetInteger(0,name,OBJPROP_BACK,false);
+     }
+   ObjectSetString(0,name,OBJPROP_TEXT,text);
+   ObjectSetInteger(0,name,OBJPROP_COLOR,textColor);
+  }
+
 void ClearTradePlanLevels()
   {
    ObjectDelete(0,"GAB_Entry");
@@ -325,6 +352,21 @@ void AnalyzeClosedCandle()
    bool bandBullish=(closeM15>basis && closeM15<upperBand);
    bool bandBearish=(closeM15<basis && closeM15>lowerBand);
 
+   // Setup context: use closed candles only to avoid intrabar breakout signals.
+   double previousHigh=iHigh(InpSymbol,InpSignalTimeframe,2);
+   double previousLow=iLow(InpSymbol,InpSignalTimeframe,2);
+   bool bullishBreakout=(closeM15>previousHigh && closeM15>basis);
+   bool bearishBreakout=(closeM15<previousLow && closeM15<basis);
+   bool bullishRetest=(iLow(InpSymbol,InpSignalTimeframe,1)<=m15Fast &&
+                       closeM15>m15Fast && closeM15>iOpen(InpSymbol,InpSignalTimeframe,1));
+   bool bearishRetest=(iHigh(InpSymbol,InpSignalTimeframe,1)>=m15Fast &&
+                       closeM15<m15Fast && closeM15<iOpen(InpSymbol,InpSignalTimeframe,1));
+   string setupContext="No clear breakout/retest";
+   if(bullishBreakout) setupContext="Bullish momentum breakout";
+   else if(bearishBreakout) setupContext="Bearish momentum breakout";
+   else if(bullishRetest) setupContext="Bullish EMA retest candidate";
+   else if(bearishRetest) setupContext="Bearish EMA retest candidate";
+
    double roomToResistance=resistance-closeM15;
    double roomToSupport=closeM15-support;
    bool roomForBuy=(roomToResistance>atr*InpMinimumRoomATR);
@@ -394,19 +436,27 @@ void AnalyzeClosedCandle()
    double stopReference=0.0;
    double targetReference=0.0;
    double rewardRisk=0.0;
+   double stopBuffer=atr*0.15;
    if(signal==SIGNAL_BUY)
      {
-      stopReference=entryReference-(atr*InpStopATRMultiplier);
-      targetReference=entryReference+(atr*InpTargetATRMultiplier);
-      rewardRisk=(entryReference-stopReference>0.0 ?
-                  (targetReference-entryReference)/(entryReference-stopReference):0.0);
+      // Place the reference stop beyond support when that is farther than
+      // the ATR stop; a wider stop increases risk and must pass RR filtering.
+      stopReference=MathMin(entryReference-(atr*InpStopATRMultiplier),support-stopBuffer);
+      double riskDistance=entryReference-stopReference;
+      targetReference=entryReference+(riskDistance*InpTargetATRMultiplier/InpStopATRMultiplier);
+      // Do not suggest a target beyond nearby resistance; leave a small buffer.
+      if(resistance>entryReference && resistance<targetReference)
+         targetReference=resistance-stopBuffer;
+      rewardRisk=(riskDistance>0.0 ? (targetReference-entryReference)/riskDistance:0.0);
      }
    else if(signal==SIGNAL_SELL)
      {
-      stopReference=entryReference+(atr*InpStopATRMultiplier);
-      targetReference=entryReference-(atr*InpTargetATRMultiplier);
-      rewardRisk=(stopReference-entryReference>0.0 ?
-                  (entryReference-targetReference)/(stopReference-entryReference):0.0);
+      stopReference=MathMax(entryReference+(atr*InpStopATRMultiplier),resistance+stopBuffer);
+      double riskDistance=stopReference-entryReference;
+      targetReference=entryReference-(riskDistance*InpTargetATRMultiplier/InpStopATRMultiplier);
+      if(support<entryReference && support>targetReference)
+         targetReference=support+stopBuffer;
+      rewardRisk=(riskDistance>0.0 ? (entryReference-targetReference)/riskDistance:0.0);
      }
 
    if(signal!=SIGNAL_WAIT && rewardRisk<InpMinimumRewardRisk)
@@ -429,7 +479,7 @@ void AnalyzeClosedCandle()
      }
    ChartRedraw(0);
 
-   string report="GOMEZ ALPHA BOT v1.40\n";
+   string report="GOMEZ ALPHA BOT v1.50\n";
    report+="MODE: ANALYSIS ONLY - NO ORDERS\n";
    report+="Signal: "+(signal==SIGNAL_BUY ? "BUY" : signal==SIGNAL_SELL ? "SELL" : "WAIT")+
            " | "+InpSymbol+"\n";
@@ -469,7 +519,22 @@ void AnalyzeClosedCandle()
    if(signal!=SIGNAL_WAIT || InpLogWaitSignals)
       Print(report);
    if(InpShowChartComment)
+     {
       Comment(report);
+      color dashboardColor=(signal==SIGNAL_BUY ? clrLimeGreen : signal==SIGNAL_SELL ? clrTomato : clrGold);
+      UpdateDashboard("GOMEZ ALPHA BOT v1.50\\n"+
+                      "MODE: ANALYSIS ONLY\\n"+
+                      "SIGNAL: "+(signal==SIGNAL_BUY ? "BUY" : signal==SIGNAL_SELL ? "SELL" : "WAIT")+"\\n"+
+                      "H1 TREND: "+(h1Bullish ? "BULLISH" : h1Bearish ? "BEARISH" : "NEUTRAL")+"\\n"+
+                      "M15 TREND: "+(m15Bullish ? "BULLISH" : m15Bearish ? "BEARISH" : "NEUTRAL")+"\\n"+
+                      "SETUP: "+setupContext+"\\n"+
+                      "BUY SCORE: "+IntegerToString(buyScore)+"/"+IntegerToString(maxScore)+" | SELL SCORE: "+IntegerToString(sellScore)+"/"+IntegerToString(maxScore)+"\\n"+
+                      "RSI: "+DoubleToString(rsi,1)+" | ADX: "+DoubleToString(adx,1)+"\\n"+
+                      "SUPPORT: "+DoubleToString(support,digits)+"\\n"+
+                      "RESISTANCE: "+DoubleToString(resistance,digits)+"\\n"+
+                      "SPREAD: "+DoubleToString(spreadPoints,1)+" pts\\n"+
+                      "REASON: "+reason,dashboardColor);
+     }
   }
 
 //+------------------------------------------------------------------+
@@ -538,6 +603,7 @@ void OnDeinit(const int reason)
    if(hADX!=INVALID_HANDLE) IndicatorRelease(hADX);
    if(hBands!=INVALID_HANDLE) IndicatorRelease(hBands);
    Comment("");
+   ObjectDelete(0,"GAB_Dashboard");
    ObjectDelete(0,"GAB_Support");
    ObjectDelete(0,"GAB_Resistance");
    ClearTradePlanLevels();
